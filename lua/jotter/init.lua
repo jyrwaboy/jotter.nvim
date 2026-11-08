@@ -1,6 +1,6 @@
 --- @brief [[
 --- Main entry point for jotter.nvim.
---- Exposes setup, toggle, open, and close functions, user commands (`:Jotter`, `:JotterClose`),
+--- Exposes setup, toggle, open, and close functions, user commands (`:Jotter`, `:JotterSplit`, `:JotterFloat`, `:JotterClose`),
 --- and auto-saving/cleanup autocommands.
 --- ]]
 
@@ -10,48 +10,64 @@ local ui = require("jotter.ui")
 
 local M = {}
 
---- Opens the jotter scratchpad in a centered floating window.
+--- Opens the jotter window.
 --- @param origin_override number|nil Optional buffer handle to restore on close.
+--- @param mode_override string|nil Optional mode override ("float" or "split").
 --- @return nil
-function M.open(origin_override)
-	ui.open(origin_override)
+function M.open(origin_override, mode_override)
+	ui.open(origin_override, mode_override)
 end
 
---- Closes the jotter floating window and restores the origin window.
+--- Closes the jotter window and restores the origin window.
 --- @return nil
 function M.close()
 	ui.close()
 end
 
---- Toggles the jotter floating window open or closed.
---- If open, closes and saves to disk. If closed, opens and captures the current buffer as origin.
+--- Toggles the jotter window open or closed (or switches mode if already open in another mode).
+--- @param mode_override string|nil Optional mode override ("float" or "split").
 --- @return nil
-function M.toggle()
+function M.toggle(mode_override)
 	if state.is_valid_win(state.float_win) then
-		ui.close()
-		return
+		local current_is_float = vim.api.nvim_win_get_config(state.float_win).relative ~= ""
+		local target_mode = mode_override or config.options.open_mode or "float"
+		local target_is_float = (target_mode == "float")
+
+		-- If open and target mode matches current mode, close it. Otherwise switch mode.
+		if current_is_float == target_is_float then
+			ui.close()
+			return
+		end
 	end
 
 	local pre_buf = vim.api.nvim_get_current_buf()
-	ui.open(pre_buf)
+	ui.open(pre_buf, mode_override)
 end
 
 --- Initializes jotter.nvim with user options, sets up global toggle keymaps,
---- registers user commands (`:Jotter` and `:JotterClose`), and configures safety-net
+--- registers user commands (`:Jotter`, `:JotterSplit`, `:JotterFloat`, `:JotterClose`), and configures safety-net
 --- autocommands (`VimLeavePre` and `WinClosed`).
 --- @param user_opts table|nil User configuration options table.
 --- @return nil
---- @example
---- require("jotter").setup({ width = 0.8, filename = "jotter.md" })
 function M.setup(user_opts)
 	config.setup(user_opts)
 
 	local toggle_key = config.options.keymaps and config.options.keymaps.toggle or "<leader>n"
-	vim.keymap.set("n", toggle_key, M.toggle, { silent = true, desc = "Toggle Jotter" })
+	vim.keymap.set("n", toggle_key, function()
+		M.toggle()
+	end, { silent = true, desc = "Toggle Jotter" })
 
 	vim.api.nvim_create_user_command("Jotter", function()
 		M.toggle()
 	end, { desc = "Toggle jotter" })
+
+	vim.api.nvim_create_user_command("JotterSplit", function()
+		M.toggle("split")
+	end, { desc = "Toggle/switch jotter to split view" })
+
+	vim.api.nvim_create_user_command("JotterFloat", function()
+		M.toggle("float")
+	end, { desc = "Toggle/switch jotter to floating window" })
 	
 	vim.api.nvim_create_user_command("JotterClose", function()
 		M.close()
