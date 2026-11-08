@@ -1,21 +1,31 @@
+--- @brief [[
+--- Main entry point for jotter.nvim.
+--- Exposes setup, toggle, open, and close functions, user commands (`:Jotter`, `:JotterClose`),
+--- and auto-saving/cleanup autocommands.
+--- ]]
+
 local config = require("jotter.config")
 local state = require("jotter.state")
 local ui = require("jotter.ui")
 
 local M = {}
 
---- Opens the scratchpad in a centered floating window.
---- @param origin_override number|nil Optional buffer handle to restore on close
+--- Opens the jotter scratchpad in a centered floating window.
+--- @param origin_override number|nil Optional buffer handle to restore on close.
+--- @return nil
 function M.open(origin_override)
 	ui.open(origin_override)
 end
 
---- Closes the scratchpad floating window.
+--- Closes the jotter floating window and restores the origin window.
+--- @return nil
 function M.close()
 	ui.close()
 end
 
---- Toggles the scratchpad floating window open or closed.
+--- Toggles the jotter floating window open or closed.
+--- If open, closes and saves to disk. If closed, opens and captures the current buffer as origin.
+--- @return nil
 function M.toggle()
 	if state.is_valid_win(state.float_win) then
 		ui.close()
@@ -26,8 +36,13 @@ function M.toggle()
 	ui.open(pre_buf)
 end
 
---- Initializes jotter.nvim with user options, keymaps, commands, and autocommands.
---- @param user_opts table|nil User configuration options
+--- Initializes jotter.nvim with user options, sets up global toggle keymaps,
+--- registers user commands (`:Jotter` and `:JotterClose`), and configures safety-net
+--- autocommands (`VimLeavePre` and `WinClosed`).
+--- @param user_opts table|nil User configuration options table.
+--- @return nil
+--- @example
+--- require("jotter").setup({ width = 0.8, filename = "jotter.md" })
 function M.setup(user_opts)
 	config.setup(user_opts)
 

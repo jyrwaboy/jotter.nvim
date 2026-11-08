@@ -1,13 +1,25 @@
+--- @brief [[
+--- UI and window management module for jotter.nvim.
+--- Handles opening/closing the centered floating window, buffer initialization,
+--- render-markdown integration, and buffer-local close keymaps.
+--- ]]
+
 local config = require("jotter.config")
 local state = require("jotter.state")
 
 local M = {}
 
+--- Determines the absolute file path for the persistent jotter markdown file.
+--- Uses vim.fn.stdpath("data") combined with the configured filename.
+--- @return string Absolute path to jotter markdown file.
 local function scratchpad_path()
 	local filename = config.options.filename or "jotter.md"
 	return vim.fn.stdpath("data") .. "/" .. filename
 end
 
+--- Ensures the jotter markdown file and its parent directories exist on disk.
+--- Creates an initial header if the file does not yet exist.
+--- @return string Absolute path to the verified jotter file.
 local function ensure_file()
 	local p = scratchpad_path()
 	if vim.fn.filereadable(p) == 0 then
@@ -15,14 +27,15 @@ local function ensure_file()
 		vim.fn.mkdir(dir, "p")
 		local fd = io.open(p, "w")
 		if fd then
-			fd:write("# Scratchpad\n\n")
+			fd:write("# Jotter\n\n")
 			fd:close()
 		end
 	end
 	return p
 end
 
---- Saves the scratchpad buffer to disk if modified.
+--- Saves the active jotter buffer to disk silently if marked as modified.
+--- Side effects: Writes buffer contents to the backing file on disk.
 local function save_to_disk()
 	if state.is_valid_buf(state.float_buf) then
 		vim.api.nvim_buf_call(state.float_buf, function()
@@ -35,8 +48,11 @@ end
 
 M.save_to_disk = save_to_disk
 
---- Opens the scratchpad in a centered floating window.
---- @param origin_override number|nil Optional buffer handle to restore on close
+--- Opens the jotter scratchpad in a centered floating window.
+--- If the float is already open, focuses it. If the buffer is already loaded, reuses it.
+--- Configures buffer-local options, window wrap, border, title, render-markdown, and close keymaps.
+--- @param origin_override number|nil Optional buffer handle to restore when closing the float.
+--- @return nil
 function M.open(origin_override)
 	local path = ensure_file()
 
@@ -118,7 +134,9 @@ function M.open(origin_override)
 	vim.keymap.set("n", "q", close_and_restore, { buffer = state.float_buf, silent = true, desc = "Close Jotter" })
 end
 
---- Closes the scratchpad floating window and restores the origin window.
+--- Closes the jotter floating window and restores the origin window and buffer.
+--- Automatically triggers saving modified contents to disk before closing.
+--- @return nil
 function M.close()
 	if not state.is_valid_win(state.float_win) then
 		return
