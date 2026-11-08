@@ -52,10 +52,25 @@ end
 function M.setup(user_opts)
 	config.setup(user_opts)
 
-	local toggle_key = config.options.keymaps and config.options.keymaps.toggle or "<leader>n"
-	vim.keymap.set("n", toggle_key, function()
-		M.toggle()
-	end, { silent = true, desc = "Toggle Jotter" })
+	local keymaps = config.options.keymaps or {}
+
+	if keymaps.toggle then
+		vim.keymap.set("n", keymaps.toggle, function()
+			M.toggle()
+		end, { silent = true, desc = "Toggle Jotter" })
+	end
+
+	if keymaps.split then
+		vim.keymap.set("n", keymaps.split, function()
+			M.toggle("split")
+		end, { silent = true, desc = "Toggle Jotter Split" })
+	end
+
+	if keymaps.float then
+		vim.keymap.set("n", keymaps.float, function()
+			M.toggle("float")
+		end, { silent = true, desc = "Toggle Jotter Float" })
+	end
 
 	vim.api.nvim_create_user_command("Jotter", function()
 		M.toggle()

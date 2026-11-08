@@ -11,7 +11,7 @@ local M = {}
 --- @field filename string Persistent markdown storage filename in stdpath("data"). Defaults to "jotter.md".
 --- @field open_mode string Window opening mode ("float" or "split"). Defaults to "float".
 --- @field split_side string Split orientation/position ("below", "above", "left", "right"). Defaults to "below".
---- @field keymaps table Keybinding configurations. Defaults to `<leader>n`.
+--- @field keymaps table Keybinding configurations (toggle, split, float).
 M.defaults = {
 	width = 0.75,
 	height = 0.70,
@@ -20,6 +20,8 @@ M.defaults = {
 	split_side = "below", -- "below", "above", "left", "right"
 	keymaps = {
 		toggle = "<leader>n",
+		split = nil, -- e.g. "<leader>ns"
+		float = nil, -- e.g. "<leader>nf"
 	},
 }
 

@@ -25,6 +25,8 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
       split_side = "below",  -- "below", "above", "left", "right"
       keymaps = {
         toggle = "<leader>n",
+        split = "<leader>ns",  -- Optional: keymap to open/switch to split
+        float = "<leader>nf",  -- Optional: keymap to open/switch to float
       },
     })
   end
@@ -34,8 +36,8 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ## Usage
 
 - Press `<leader>n` (or `q` inside the jotter window) to toggle or close.
-- Commands:
-  - `:Jotter` — Toggle jotter in configured mode (`float` or `split`).
-  - `:JotterSplit` — Open or switch jotter to a window split.
-  - `:JotterFloat` — Open or switch jotter to a floating window.
+- Commands & Keymaps:
+  - `:Jotter` (keymap: `<leader>n`) — Toggle jotter in configured mode (`float` or `split`).
+  - `:JotterSplit` (keymap: `<leader>ns`) — Open or switch jotter to a window split.
+  - `:JotterFloat` (keymap: `<leader>nf`) — Open or switch jotter to a floating window.
   - `:JotterClose` — Close jotter.
