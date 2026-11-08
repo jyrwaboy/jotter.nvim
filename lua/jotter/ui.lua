@@ -4,7 +4,7 @@ local state = require("jotter.state")
 local M = {}
 
 local function scratchpad_path()
-	local filename = config.options.filename or "scratchpad.md"
+	local filename = config.options.filename or "jotter.md"
 	return vim.fn.stdpath("data") .. "/" .. filename
 end
 
@@ -73,7 +73,7 @@ function M.open(origin_override)
 		col = col,
 		style = "minimal",
 		border = "rounded",
-		title = " Scratchpad ",
+		title = " Jotter ",
 		title_pos = "center",
 	})
 
@@ -114,8 +114,8 @@ function M.open(origin_override)
 	end
 
 	local close_key = config.options.keymaps and config.options.keymaps.toggle or "<leader>n"
-	vim.keymap.set("n", close_key, close_and_restore, { buffer = state.float_buf, silent = true, desc = "Close Scratchpad" })
-	vim.keymap.set("n", "q", close_and_restore, { buffer = state.float_buf, silent = true, desc = "Close Scratchpad" })
+	vim.keymap.set("n", close_key, close_and_restore, { buffer = state.float_buf, silent = true, desc = "Close Jotter" })
+	vim.keymap.set("n", "q", close_and_restore, { buffer = state.float_buf, silent = true, desc = "Close Jotter" })
 end
 
 --- Closes the scratchpad floating window and restores the origin window.

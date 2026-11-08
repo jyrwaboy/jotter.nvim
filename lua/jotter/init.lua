@@ -32,15 +32,15 @@ function M.setup(user_opts)
 	config.setup(user_opts)
 
 	local toggle_key = config.options.keymaps and config.options.keymaps.toggle or "<leader>n"
-	vim.keymap.set("n", toggle_key, M.toggle, { silent = true, desc = "Toggle Scratchpad" })
+	vim.keymap.set("n", toggle_key, M.toggle, { silent = true, desc = "Toggle Jotter" })
 
-	vim.api.nvim_create_user_command("Scratchpad", function()
+	vim.api.nvim_create_user_command("Jotter", function()
 		M.toggle()
-	end, { desc = "Toggle scratchpad" })
+	end, { desc = "Toggle jotter" })
 	
-	vim.api.nvim_create_user_command("ScratchpadClose", function()
+	vim.api.nvim_create_user_command("JotterClose", function()
 		M.close()
-	end, { desc = "Close scratchpad" })
+	end, { desc = "Close jotter" })
 
 	vim.api.nvim_create_autocmd("VimLeavePre", {
 		callback = function()

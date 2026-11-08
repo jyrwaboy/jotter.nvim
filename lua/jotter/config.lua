@@ -3,7 +3,7 @@ local M = {}
 M.defaults = {
 	width = 0.75,
 	height = 0.70,
-	filename = "scratchpad.md",
+	filename = "jotter.md",
 	keymaps = {
 		toggle = "<leader>n",
 	},

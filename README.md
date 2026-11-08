@@ -20,7 +20,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
     require("jotter").setup({
       width = 0.75,
       height = 0.70,
-      filename = "scratchpad.md",
+      filename = "jotter.md",
       keymaps = {
         toggle = "<leader>n",
       },
@@ -31,5 +31,5 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ## Usage
 
-- Press `<leader>n` (or `q` inside the scratchpad window) to toggle or close.
-- Run `:Scratchpad` or `:ScratchpadClose`.
+- Press `<leader>n` (or `q` inside the jotter window) to toggle or close.
+- Run `:Jotter` or `:JotterClose`.
