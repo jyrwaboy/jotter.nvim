@@ -15,7 +15,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-  "username/jotter.nvim",
+  "JyrwaJR/jotter.nvim",
   config = function()
     require("jotter").setup({
       width = 0.75,
