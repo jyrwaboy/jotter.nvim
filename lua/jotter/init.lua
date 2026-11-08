@@ -1,6 +1,6 @@
 --- @brief [[
 --- Main entry point for jotter.nvim.
---- Exposes setup, toggle, open, and close functions, user commands (`:Jotter`, `:JotterSplit`, `:JotterFloat`, `:JotterClose`),
+--- Exposes setup, toggle, open, and close functions, user commands (`:Jotter`, `:JotterSplit`, `:JotterFloat`, `:JotterClip`, `:JotterClose`),
 --- and auto-saving/cleanup autocommands.
 --- ]]
 
@@ -13,9 +13,11 @@ local M = {}
 --- Opens the jotter window.
 --- @param origin_override number|nil Optional buffer handle to restore on close.
 --- @param mode_override string|nil Optional mode override ("float" or "split").
+--- @param filename_override string|nil Optional filename override.
+--- @param title_override string|nil Optional title override.
 --- @return nil
-function M.open(origin_override, mode_override)
-	ui.open(origin_override, mode_override)
+function M.open(origin_override, mode_override, filename_override, title_override)
+	ui.open(origin_override, mode_override, filename_override, title_override)
 end
 
 --- Closes the jotter window and restores the origin window.
@@ -24,29 +26,32 @@ function M.close()
 	ui.close()
 end
 
---- Toggles the jotter window open or closed (or switches mode if already open in another mode).
+--- Toggles the jotter window open or closed.
 --- @param mode_override string|nil Optional mode override ("float" or "split").
+--- @param filename_override string|nil Optional filename override.
+--- @param title_override string|nil Optional title override.
 --- @return nil
-function M.toggle(mode_override)
+function M.toggle(mode_override, filename_override, title_override)
+	local target_filename = filename_override or config.options.filename or "jotter.md"
+
 	if state.is_valid_win(state.float_win) then
+		local current_buf_name = state.is_valid_buf(state.float_buf) and vim.api.nvim_buf_get_name(state.float_buf) or ""
+		local target_path = vim.fn.stdpath("data") .. "/" .. target_filename
 		local current_is_float = vim.api.nvim_win_get_config(state.float_win).relative ~= ""
 		local target_mode = mode_override or config.options.open_mode or "float"
 		local target_is_float = (target_mode == "float")
 
-		-- If open and target mode matches current mode, close it. Otherwise switch mode.
-		if current_is_float == target_is_float then
+		if current_buf_name == target_path and (current_is_float == target_is_float) then
 			ui.close()
 			return
 		end
 	end
 
 	local pre_buf = vim.api.nvim_get_current_buf()
-	ui.open(pre_buf, mode_override)
+	ui.open(pre_buf, mode_override, filename_override, title_override)
 end
 
---- Initializes jotter.nvim with user options, sets up global toggle keymaps,
---- registers user commands (`:Jotter`, `:JotterSplit`, `:JotterFloat`, `:JotterClose`), and configures safety-net
---- autocommands (`VimLeavePre` and `WinClosed`).
+--- Initializes jotter.nvim with user options, keymaps, commands, and autocommands.
 --- @param user_opts table|nil User configuration options table.
 --- @return nil
 function M.setup(user_opts)
@@ -72,6 +77,12 @@ function M.setup(user_opts)
 		end, { silent = true, desc = "Toggle Jotter Float" })
 	end
 
+	if keymaps.clip then
+		vim.keymap.set("n", keymaps.clip, function()
+			M.toggle(nil, config.options.clip_filename, " Jotter Clipboard ")
+		end, { silent = true, desc = "Toggle Jotter Clipboard History" })
+	end
+
 	vim.api.nvim_create_user_command("Jotter", function()
 		M.toggle()
 	end, { desc = "Toggle jotter" })
@@ -83,6 +94,10 @@ function M.setup(user_opts)
 	vim.api.nvim_create_user_command("JotterFloat", function()
 		M.toggle("float")
 	end, { desc = "Toggle/switch jotter to floating window" })
+
+	vim.api.nvim_create_user_command("JotterClip", function()
+		M.toggle(nil, config.options.clip_filename, " Jotter Clipboard ")
+	end, { desc = "Open clipboard history jotter tab" })
 	
 	vim.api.nvim_create_user_command("JotterClose", function()
 		M.close()
