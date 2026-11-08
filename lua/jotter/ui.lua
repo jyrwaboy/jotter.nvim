@@ -9,23 +9,55 @@ local state = require("jotter.state")
 
 local M = {}
 
-local function scratchpad_path()
-	local filename = config.options.filename or "jotter.md"
-	return vim.fn.stdpath("data") .. "/" .. filename
-end
-
-local function ensure_file()
-	local p = scratchpad_path()
+local function ensure_file(filename, initial_header)
+	local fname = filename or config.options.filename or "jotter.md"
+	local p = vim.fn.stdpath("data") .. "/" .. fname
 	if vim.fn.filereadable(p) == 0 then
 		local dir = vim.fn.fnamemodify(p, ":h")
 		vim.fn.mkdir(dir, "p")
 		local fd = io.open(p, "w")
 		if fd then
-			fd:write("# Jotter\n\n")
+			fd:write(initial_header or "# Jotter\n\n")
 			fd:close()
 		end
 	end
 	return p
+end
+
+--- Captures current system clipboard text and appends it to the clipboard history file if new.
+--- @param clip_filename string The filename for clipboard history.
+local function capture_clipboard(clip_filename)
+	local clip_text = vim.fn.getreg("+")
+	if not clip_text or clip_text == "" then
+		return
+	end
+
+	clip_text = vim.trim(clip_text)
+	if clip_text == "" then
+		return
+	end
+
+	local path = ensure_file(clip_filename, "# Clipboard History\n\n")
+
+	local f = io.open(path, "r")
+	local content = ""
+	if f then
+		content = f:read("*a")
+		f:close()
+	end
+
+	if content:find(clip_text, 1, true) then
+		return
+	end
+
+	local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+	local entry = string.format("\n## Clip [%s]\n\n```text\n%s\n```\n", timestamp, clip_text)
+
+	local append_f = io.open(path, "a")
+	if append_f then
+		append_f:write(entry)
+		append_f:close()
+	end
 end
 
 local function save_to_disk()
@@ -41,29 +73,42 @@ end
 M.save_to_disk = save_to_disk
 
 --- Opens jotter in either a floating window or a window split based on mode_override or config.
---- If already open in a different mode (e.g., float vs split), closes the current window and re-opens in the new mode.
 --- @param origin_override number|nil Optional buffer handle to restore on close.
 --- @param mode_override string|nil Optional mode override ("float" or "split").
-function M.open(origin_override, mode_override)
-	local path = ensure_file()
+--- @param filename_override string|nil Optional filename override (e.g. for clipboard tab).
+--- @param title_override string|nil Optional window title override.
+function M.open(origin_override, mode_override, filename_override, title_override)
+	local filename = filename_override or config.options.filename or "jotter.md"
+
+	if filename_override and filename_override == config.options.clip_filename then
+		capture_clipboard(filename_override)
+	end
+
+	local path = ensure_file(filename, filename == config.options.clip_filename and "# Clipboard History\n\n" or "# Jotter\n\n")
 	local mode = mode_override or config.options.open_mode or "float"
+	local win_title = title_override or (filename == config.options.clip_filename and " Jotter Clipboard " or " Jotter ")
 
 	if not state.is_valid_buf(state.float_buf) then
 		state.float_buf = vim.fn.bufadd(path)
 		vim.api.nvim_buf_set_name(state.float_buf, path)
+	else
+		local current_buf_name = vim.api.nvim_buf_get_name(state.float_buf)
+		if current_buf_name ~= path then
+			save_to_disk()
+			state.float_buf = vim.fn.bufadd(path)
+			vim.api.nvim_buf_set_name(state.float_buf, path)
+		end
 	end
 
 	if not vim.api.nvim_buf_is_loaded(state.float_buf) then
 		vim.fn.bufload(state.float_buf)
 	end
 
-	-- If already open, check if we need to switch mode (e.g. from float to split or vice versa)
 	if state.is_valid_win(state.float_win) then
 		local current_is_float = vim.api.nvim_win_get_config(state.float_win).relative ~= ""
 		local target_is_float = (mode == "float")
 
 		if current_is_float ~= target_is_float then
-			-- Switch mode: close current window without resetting buffer/origin, then re-open in new mode
 			local win = state.float_win
 			state.float_win = nil
 			if vim.api.nvim_win_is_valid(win) then
@@ -71,6 +116,7 @@ function M.open(origin_override, mode_override)
 			end
 		else
 			vim.api.nvim_set_current_win(state.float_win)
+			vim.api.nvim_win_set_buf(state.float_win, state.float_buf)
 			return
 		end
 	end
@@ -88,7 +134,7 @@ function M.open(origin_override, mode_override)
 			vim.cmd("topleft vsplit")
 		elseif side == "right" then
 			vim.cmd("botright vsplit")
-		else -- "below" (default)
+		else
 			vim.cmd("belowright split")
 		end
 
@@ -100,7 +146,6 @@ function M.open(origin_override, mode_override)
 		vim.wo[state.float_win].number = true
 		vim.wo[state.float_win].relativenumber = false
 	else
-		-- Floating window mode
 		local width_ratio = config.options.width or 0.75
 		local height_ratio = config.options.height or 0.70
 
@@ -117,7 +162,7 @@ function M.open(origin_override, mode_override)
 			col = col,
 			style = "minimal",
 			border = "rounded",
-			title = " Jotter ",
+			title = win_title,
 			title_pos = "center",
 		})
 
