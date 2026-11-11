@@ -15,20 +15,20 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-  "username/jotter.nvim",
+  "jyrwaboy/jotter.nvim",
   config = function()
     require("jotter").setup({
       width = 0.75,
       height = 0.70,
       filename = "jotter.md",
-      clip_filename = "clipboard.md",
+      clip_filename = "jotter-clipboard.md",
       open_mode = "float",   -- "float" or "split"
       split_side = "below",  -- "below", "above", "left", "right"
       keymaps = {
-        toggle = "<leader>n",
-        split = "<leader>ns",
-        float = "<leader>nf",
-        clip = "<leader>nc",  -- Optional: keymap to open clipboard history tab
+        toggle = "<leader>j",
+        split = "<leader>js",
+        float = "<leader>jf",
+        clip = "<leader>jc",  -- Optional: keymap to open clipboard history tab
       },
     })
   end
@@ -37,10 +37,10 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ## Usage
 
-- Press `<leader>n` (or `q` inside the jotter window) to toggle or close.
+- Press `<leader>j` (or `q` inside the jotter window) to toggle or close.
 - Commands & Keymaps:
-  - `:Jotter` (keymap: `<leader>n`) — Toggle main jotter scratchpad.
-  - `:JotterClip` (keymap: `<leader>nc`) — Open clipboard history tab (auto-pulls latest clipboard copy).
-  - `:JotterSplit` (keymap: `<leader>ns`) — Open/switch to window split.
-  - `:JotterFloat` (keymap: `<leader>nf`) — Open/switch to floating window.
+  - `:Jotter` (keymap: `<leader>j`) — Toggle main jotter scratchpad.
+  - `:JotterClip` (keymap: `<leader>jc`) — Open clipboard history tab (auto-pulls latest clipboard copy).
+  - `:JotterSplit` (keymap: `<leader>js`) — Open/switch to window split.
+  - `:JotterFloat` (keymap: `<leader>jf`) — Open/switch to floating window.
   - `:JotterClose` — Close jotter.
